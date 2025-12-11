@@ -4,63 +4,65 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
 
 import go.logic.Protocol;
+import go.ui.ConsoleView;
+import go.ui.GameView;
 
 public class GoClient {
     private Socket socket; 
     private DataInputStream fromServer;
     private DataOutputStream toServer;
+    private final GameView gameView = new ConsoleView();
     public static void main(String[] args){
         new GoClient().connect();
     }
     private void connect(){
         try {
-            System.out.println("Łączenie z serwerem");
+            gameView.showMessage("Łączenie z serwerem");
             socket = new Socket("localhost", Protocol.Port);
             fromServer = new DataInputStream(socket.getInputStream());
             toServer = new DataOutputStream(socket.getOutputStream());
 
             int playerId = fromServer.readInt();
-            System.out.println("Połączono jako gracz " + playerId);
+            gameView.showMessage("Połączono jako gracz " + playerId);
             if(playerId == Protocol.Player1){
-                System.out.println("Czekanie na drugiego gracza");
+                gameView.showMessage("Czekanie na drugiego gracza");
                 fromServer.readInt();
-                System.out.println("Drugi gracz dołączył. Rozpoczynam grę");
+                gameView.showMessage("Drugi gracz dołączył. Rozpoczynam grę");
             }
             else{
-                System.out.println("Rozpoczynam grę");
+                gameView.showMessage("Rozpoczynam grę");
             }
             playGame(playerId);
         } catch (Exception e) {
-            System.out.println("Błąd połączenia z serwerem");
+            gameView.showMessage("Błąd połączenia z serwerem");
         }
     } 
     private void playGame(int playerId) throws IOException{
         boolean myTurn = (playerId == Protocol.Player1);
-        Scanner scanner = new Scanner(System.in);
+//        Scanner scanner = new Scanner(System.in);
         while(true){
             if(myTurn){
-                System.out.println("Twój ruch. Wpisz współrzędne 'x y' lub 'pass', 'surrender', 'quit':");
-                String input = scanner.nextLine().trim();
+                gameView.showMessage("Twój ruch. Wpisz współrzędne 'x y' lub 'pass', 'surrender', 'quit':");
+                String input = gameView.getInput();
                 
                 if(input.equalsIgnoreCase("pass")){
                     toServer.writeInt(Protocol.PASS);
                     toServer.flush();
-                    System.out.println("Pasujesz turę.");
+                    gameView.showMessage("Pasujesz turę.");
                     myTurn = false;
                 } 
                 else if(input.equalsIgnoreCase("surrender")){
                     toServer.writeInt(Protocol.SURRENDER);
                     toServer.flush();
-                    System.out.println("Poddajesz się. Koniec gry.");
+                    gameView.showMessage("Poddajesz się. Koniec gry.");
                     break;
                 }
                 else if(input.equalsIgnoreCase("quit")){
                     toServer.writeInt(Protocol.QUIT);
                     toServer.flush();
-                    System.out.println("Wychodzisz z gry.");
+                    gameView.showMessage("Wychodzisz z gry.");
                     break;
                 }
                 else {
@@ -73,44 +75,44 @@ public class GoClient {
                             toServer.writeInt(x);
                             toServer.writeInt(y);
                             toServer.flush();
-                            System.out.println("Ruch wysłany na pozycję (" + x + "," + y + ")");
+                            gameView.showMessage("Ruch wysłany na pozycję (" + x + "," + y + ")");
                             myTurn = false;
                         } else {
-                            System.out.println("Nieprawidłowy format. Wpisz 'x y' lub komendę.");
+                            gameView.showMessage("Nieprawidłowy format. Wpisz 'x y' lub komendę.");
                         }
                     } catch (NumberFormatException e) {
-                        System.out.println("Nieprawidłowe współrzędne. Spróbuj ponownie.");
+                        gameView.showMessage("Nieprawidłowe współrzędne. Spróbuj ponownie.");
                     }
                 }
 
             } else {
-                System.out.println("Czekanie na ruch przeciwnika");
+                gameView.showMessage("Czekanie na ruch przeciwnika");
             
                 int messageType = fromServer.readInt();
 
                 if (messageType == Protocol.MOVE) {
                     int x = fromServer.readInt();
                     int y = fromServer.readInt();
-                    System.out.println("Przeciwnik postawił kamień na: " + x + ", " + y);
+                    gameView.showMessage("Przeciwnik postawił kamień na: " + x + ", " + y);
                     
                     myTurn = true;
                 }
                 else if (messageType == Protocol.INVALID_MOVE) {
                     int x = fromServer.readInt();
                     int y = fromServer.readInt();
-                    System.out.println("Ruch ("+x+","+y+") jest nielegalny! Spróbuj ponownie.");
+                    gameView.showMessage("Ruch ("+x+","+y+") jest nielegalny! Spróbuj ponownie.");
                     myTurn = true;
                 }
                 else if (messageType == Protocol.PASS) {
-                    System.out.println("Przeciwnik spasował.");
+                    gameView.showMessage("Przeciwnik spasował.");
                     myTurn = true;
                 }
                 else if (messageType == Protocol.SURRENDER) {
-                    System.out.println("Przeciwnik się poddał! Wygrałeś.");
+                    gameView.showMessage("Przeciwnik się poddał! Wygrałeś.");
                     break;
                 }
                 else if (messageType == Protocol.QUIT) {
-                    System.out.println("Przeciwnik wyszedł z gry.");
+                    gameView.showMessage("Przeciwnik wyszedł z gry.");
                     break;
                 }
             }

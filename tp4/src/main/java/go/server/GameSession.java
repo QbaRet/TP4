@@ -52,6 +52,23 @@ public class GameSession implements Runnable{
                         continue; 
                     }
                 }
+                else if(messageType==Protocol.PASS){
+                    System.out.println("Gracz 1 pasuje.");
+                    output2.writeInt(Protocol.PASS);
+                    output2.flush();
+                }
+                else if(messageType==Protocol.SURRENDER){
+                    System.out.println("Gracz 1 się poddał. Gracz 2 wygrywa.");
+                    output2.writeInt(Protocol.SURRENDER);
+                    output2.flush();
+                    break;
+                }
+                else if(messageType==Protocol.QUIT){
+                    System.out.println("Gracz 1 wyszedł z gry.");
+                    output2.writeInt(Protocol.QUIT);
+                    output2.flush();
+                    break;
+                }
                 
                 messageType=input2.readInt();
                 if(messageType==Protocol.MOVE){
@@ -72,6 +89,23 @@ public class GameSession implements Runnable{
                         output2.flush();
                         continue; 
                     }
+                }
+                else if(messageType==Protocol.PASS){
+                    System.out.println("Gracz 2 pasuje.");
+                    output1.writeInt(Protocol.PASS);
+                    output1.flush();
+                }
+                else if(messageType==Protocol.SURRENDER){
+                    System.out.println("Gracz 2 się poddał. Gracz 1 wygrywa.");
+                    output1.writeInt(Protocol.SURRENDER);
+                    output1.flush();
+                    break;
+                }
+                else if(messageType==Protocol.QUIT){
+                    System.out.println("Gracz 2 wyszedł z gry.");
+                    output1.writeInt(Protocol.QUIT);
+                    output1.flush();
+                    break;
                 }
             }
 

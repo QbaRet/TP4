@@ -43,6 +43,8 @@ public class GoClient {
         while(true){
             if(myTurn){
                 System.out.println("Twoch ruch. Wpisz współrzędne x y lub 'pass', 'surrender', 'quit':");
+
+                //Tutaj bedzie trzeba dodac obsluge pass, surrender, quit
                 if(scanner.hasNextInt()){
                     int x = scanner.nextInt();
                     int y = scanner.nextInt();
@@ -67,7 +69,13 @@ public class GoClient {
                     System.out.println("Przeciwnik postawił kamień na: " + x + ", " + y);
                     
                     myTurn = true;
-                } 
+                }
+                else if (messageType == Protocol.INVALID_MOVE) {
+                    int x = fromServer.readInt();
+                    int y = fromServer.readInt();
+                    System.out.println("Ruch ("+x+","+y+") jest nielegalny! Spróbuj ponownie.");
+                    myTurn = true;
+                }
                 else if (messageType == Protocol.PASS) {
                     System.out.println("Przeciwnik spasował.");
                     myTurn = true;

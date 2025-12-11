@@ -3,7 +3,8 @@ package go.logic;
 
 public class GameMechanics {
     public boolean IsMovePossible(Board board, int x, int y, Stone color) {
-        if (board.getField(x, y) != Stone.EMPTY) return false;
+        if (!board.isFieldOnBoard(x, y)) return false;
+        if (board.getField(x, y) != Stone.EMPTY ) return false;
         board.setField(x, y, color);
 
         CheckCaptures(board, x, y, color);

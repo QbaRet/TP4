@@ -19,14 +19,17 @@ public class Board {
         return size;
     }
 
-    public void setField(int x, int y, Stone stone) {
-        fields[x][y] = stone;
-    }
-
-    public Stone getField(int x, int y) {
-        if (x < 0 || x > size || y < 0 || y > size) {
+    public void setField(int wspX, int wspY, Stone stone) {
+        if (wspX < 0 || wspX > size || wspY < 0 || wspY > size) {
             throw new IllegalArgumentException("Podane pole nie nalezy do planszy!");
         }
-        return fields[x][y];
+        fields[wspX][wspY] = stone;
+    }
+
+    public Stone getField(int wspX, int wspY) {
+        if (wspX < 0 || wspX > size || wspY < 0 || wspY > size) {
+            throw new IllegalArgumentException("Podane pole nie nalezy do planszy!");
+        }
+        return fields[wspX][wspY];
     }
 }

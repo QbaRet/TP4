@@ -1,4 +1,4 @@
-package go.board;
+package go.logic;
 
 public class Protocol {
     public static final int Port=8000;

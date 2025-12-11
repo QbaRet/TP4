@@ -3,7 +3,7 @@ import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import go.board.Protocol;
+import go.logic.Protocol;
 
 public class GoServer {
     public static void main(String[] args){

@@ -4,7 +4,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
-import go.board.Protocol;
+import go.logic.Protocol;
 
 public class GoClient {
     private Socket socket; 

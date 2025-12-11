@@ -9,5 +9,6 @@ public class Protocol {
     public static final int SURRENDER=12;
     public static final int QUIT=13;
     public static final int GAME_OVER=14;
+    public static final int INVALID_MOVE=15;
     
 }

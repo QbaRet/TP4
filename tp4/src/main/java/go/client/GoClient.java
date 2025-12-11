@@ -42,18 +42,45 @@ public class GoClient {
         Scanner scanner = new Scanner(System.in);
         while(true){
             if(myTurn){
-                System.out.println("Twoch ruch. Wpisz współrzędne x y lub 'pass', 'surrender', 'quit':");
-                if(scanner.hasNextInt()){
-                    int x = scanner.nextInt();
-                    int y = scanner.nextInt();
-                    toServer.writeInt(Protocol.MOVE);
-                    toServer.writeInt(x);
-                    toServer.writeInt(y);
+                System.out.println("Twój ruch. Wpisz współrzędne 'x y' lub 'pass', 'surrender', 'quit':");
+                String input = scanner.nextLine().trim();
+                
+                if(input.equalsIgnoreCase("pass")){
+                    toServer.writeInt(Protocol.PASS);
                     toServer.flush();
-                    System.out.println("Ruch wysłany na pozycję (" + x + "," + y + ")");
+                    System.out.println("Pasujesz turę.");
                     myTurn = false;
-                } else {
-                    scanner.next(); 
+                } 
+                else if(input.equalsIgnoreCase("surrender")){
+                    toServer.writeInt(Protocol.SURRENDER);
+                    toServer.flush();
+                    System.out.println("Poddajesz się. Koniec gry.");
+                    break;
+                }
+                else if(input.equalsIgnoreCase("quit")){
+                    toServer.writeInt(Protocol.QUIT);
+                    toServer.flush();
+                    System.out.println("Wychodzisz z gry.");
+                    break;
+                }
+                else {
+                    try {
+                        String[] parts = input.split("\\s+");
+                        if(parts.length == 2){
+                            int x = Integer.parseInt(parts[0]);
+                            int y = Integer.parseInt(parts[1]);
+                            toServer.writeInt(Protocol.MOVE);
+                            toServer.writeInt(x);
+                            toServer.writeInt(y);
+                            toServer.flush();
+                            System.out.println("Ruch wysłany na pozycję (" + x + "," + y + ")");
+                            myTurn = false;
+                        } else {
+                            System.out.println("Nieprawidłowy format. Wpisz 'x y' lub komendę.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Nieprawidłowe współrzędne. Spróbuj ponownie.");
+                    }
                 }
 
             } else {
@@ -67,7 +94,13 @@ public class GoClient {
                     System.out.println("Przeciwnik postawił kamień na: " + x + ", " + y);
                     
                     myTurn = true;
-                } 
+                }
+                else if (messageType == Protocol.INVALID_MOVE) {
+                    int x = fromServer.readInt();
+                    int y = fromServer.readInt();
+                    System.out.println("Ruch ("+x+","+y+") jest nielegalny! Spróbuj ponownie.");
+                    myTurn = true;
+                }
                 else if (messageType == Protocol.PASS) {
                     System.out.println("Przeciwnik spasował.");
                     myTurn = true;

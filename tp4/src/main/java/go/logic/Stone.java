@@ -1,15 +1,15 @@
-package go.logic;
+    package go.logic;
 
-// Enum reprezentujacy trzy mozliwe stany pola na planszy
+    // Enum reprezentujacy trzy mozliwe stany pola na planszy
 
-public enum Stone {
-    BLACK,
-    WHITE,
-    EMPTY;
+    public enum Stone {
+        BLACK,
+        WHITE,
+        EMPTY;
 
-    public Stone opponent() {
-        if (this == BLACK) return WHITE;
-        if (this == WHITE) return BLACK;
-        return EMPTY;
+        public Stone opponent() {
+            if (this == BLACK) return WHITE;
+            if (this == WHITE) return BLACK;
+            return EMPTY;
+        }
     }
-}

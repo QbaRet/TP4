@@ -37,7 +37,7 @@ public class GameMechanics {
             int newX = x + d.getDx();
             int newY = y + d.getDy();
 
-            if (board.getField(newX, newY) == color.opponent()) {
+            if (board.isFieldOnBoard(newX, newY) && board.getField(newX, newY) == color.opponent()) {
                 if (!AreNeighboursFieldsFree(board, newX, newY)) {
                     board.setField(newX, newY, Stone.EMPTY);
                 }

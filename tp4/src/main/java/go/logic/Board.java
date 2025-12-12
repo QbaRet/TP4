@@ -2,7 +2,7 @@ package go.logic;
 
 public class Board {
     private final int size;
-    private final Stone[][] fields;
+    public final Stone[][] fields;
 
     public Board(int size) {
         this.size = size;
@@ -34,6 +34,6 @@ public class Board {
     }
 
     public boolean isFieldOnBoard(int x, int y) {
-        return x >= 0 && x <= size && y >= 0 && y <= size;
+        return x >= 0 && x < size && y >= 0 && y < size;
     }
 }

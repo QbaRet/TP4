@@ -37,11 +37,15 @@ public class GameSession implements Runnable{
                     int x=input1.readInt();
                     int y=input1.readInt();
                     
-                    if(mechanics.IsMovePossible(board, x, y, Stone.BLACK)){
+                    if(mechanics.IsMovePossible(board, (x - 1), (y - 1), Stone.BLACK)){
                         System.out.println("Gracz 1 wykonał ruch na pozycję ("+x+","+y+")");
+                        output2.writeInt(Protocol.BOARD_STATE);
+                        Protocol.sendBoard(board, output2);
+
                         output2.writeInt(Protocol.MOVE);
                         output2.writeInt(x);
                         output2.writeInt(y);
+
                         output2.flush();
                     } else {
                         System.out.println("Gracz 1 wykonał nielegalny ruch na pozycję ("+x+","+y+")");
@@ -75,11 +79,15 @@ public class GameSession implements Runnable{
                     int x=input2.readInt();
                     int y=input2.readInt();
                     
-                    if(mechanics.IsMovePossible(board, x, y, Stone.WHITE)){
+                    if(mechanics.IsMovePossible(board, (x - 1), (y - 1), Stone.WHITE)){
                         System.out.println("Gracz 2 wykonał ruch na pozycję ("+x+","+y+")");
+                        output1.writeInt(Protocol.BOARD_STATE);
+                        Protocol.sendBoard(board, output1);
+
                         output1.writeInt(Protocol.MOVE);
                         output1.writeInt(x);    
                         output1.writeInt(y);
+
                         output1.flush();
                     } else {
                         System.out.println("Gracz 2 wykonał nielegalny ruch na pozycję ("+x+","+y+")");
@@ -87,7 +95,6 @@ public class GameSession implements Runnable{
                         output2.writeInt(x);
                         output2.writeInt(y);
                         output2.flush();
-                        continue; 
                     }
                 }
                 else if(messageType==Protocol.PASS){

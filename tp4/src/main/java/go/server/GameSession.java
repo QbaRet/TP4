@@ -41,11 +41,12 @@ public class GameSession implements Runnable{
                         System.out.println("Gracz 1 wykonał ruch na pozycję ("+x+","+y+")");
                         output2.writeInt(Protocol.BOARD_STATE);
                         Protocol.sendBoard(board, output2);
-
+                        output2.writeInt(Protocol.CAPTURES);
+                        output2.writeInt(mechanics.blackCaptures);
+                        output2.writeInt(mechanics.whiteCaptures);
                         output2.writeInt(Protocol.MOVE);
                         output2.writeInt(x);
                         output2.writeInt(y);
-
                         output2.flush();
                     } else {
                         System.out.println("Gracz 1 wykonał nielegalny ruch na pozycję ("+x+","+y+")");
@@ -83,11 +84,12 @@ public class GameSession implements Runnable{
                         System.out.println("Gracz 2 wykonał ruch na pozycję ("+x+","+y+")");
                         output1.writeInt(Protocol.BOARD_STATE);
                         Protocol.sendBoard(board, output1);
-
+                        output1.writeInt(Protocol.CAPTURES);
+                        output1.writeInt(mechanics.blackCaptures);
+                        output1.writeInt(mechanics.whiteCaptures);
                         output1.writeInt(Protocol.MOVE);
                         output1.writeInt(x);    
                         output1.writeInt(y);
-
                         output1.flush();
                     } else {
                         System.out.println("Gracz 2 wykonał nielegalny ruch na pozycję ("+x+","+y+")");

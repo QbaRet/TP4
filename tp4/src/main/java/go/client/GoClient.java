@@ -17,6 +17,8 @@ public class GoClient {
     private DataOutputStream toServer;
     private Board board = new Board(19);
     private final GameView gameView = new ConsoleView();
+    private int blackCaptures = 0;
+    private int whiteCaptures = 0;
     Stone myColor;
     public static void main(String[] args){
         new GoClient().connect();
@@ -46,9 +48,9 @@ public class GoClient {
     } 
     private void playGame(int playerId) throws IOException{
         Stone currentTurn = Stone.BLACK;
-//        Scanner scanner = new Scanner(System.in);
         while(true){
             if(currentTurn == myColor){
+                gameView.showMessage("Ilość jeńców - Gracz1: " + blackCaptures + " Gracz2: " + whiteCaptures);
                 gameView.showBoard(board);
 
                 gameView.showMessage("Twój ruch. Wpisz współrzędne 'x y' lub 'pass', 'surrender', 'quit':");
@@ -106,6 +108,10 @@ public class GoClient {
                 }
                 else if (messageType == Protocol.BOARD_STATE) {
                     Protocol.receiveBoard(board, fromServer);
+                }
+                else if (messageType == Protocol.CAPTURES) {
+                    blackCaptures = fromServer.readInt();
+                    whiteCaptures = fromServer.readInt();
                 }
                 else if (messageType == Protocol.INVALID_MOVE) {
                     int x = fromServer.readInt();

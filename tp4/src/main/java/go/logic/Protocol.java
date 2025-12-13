@@ -15,6 +15,7 @@ public class Protocol {
     public static final int GAME_OVER=14;
     public static final int INVALID_MOVE=15;
     public static final int BOARD_STATE=16;
+    public static final int CAPTURES=17;
 
     public static void sendBoard(Board board, DataOutputStream out) throws IOException {
         out.writeInt(board.getSize());

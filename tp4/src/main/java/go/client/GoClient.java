@@ -10,15 +10,17 @@ import go.logic.Protocol;
 import go.logic.Stone;
 import go.ui.ConsoleView;
 import go.ui.GameView;
+import go.client.TranslateCoordinate;
 
 public class GoClient {
-    private Socket socket; 
-    private DataInputStream fromServer;
-    private DataOutputStream toServer;
+//    private Socket socket;
+//    private DataInputStream fromServer;
+//    private DataOutputStream toServer;
     private Board board = new Board(19);
     private final GameView gameView = new ConsoleView();
     private int blackCaptures = 0;
     private int whiteCaptures = 0;
+    NetworkConnection network = new NetworkConnection();
     Stone myColor;
     public static void main(String[] args){
         new GoClient().connect();
@@ -26,14 +28,12 @@ public class GoClient {
     private void connect(){
         try {
             gameView.showMessage("Łączenie z serwerem");
-            socket = new Socket("localhost", Protocol.Port);
-            fromServer = new DataInputStream(socket.getInputStream());
-            toServer = new DataOutputStream(socket.getOutputStream());
-            int playerId = fromServer.readInt();
+            network.connect();
+            int playerId = network.getPlayerId();
             gameView.showMessage("Połączono jako gracz " + playerId);
             if(playerId == Protocol.Player1){
                 gameView.showMessage("Czekanie na drugiego gracza");
-                fromServer.readInt();
+                network.waitForSecondPlayer();
                 myColor = Stone.BLACK;
                 gameView.showMessage("Drugi gracz dołączył. Rozpoczynam grę");
             }
@@ -53,41 +53,33 @@ public class GoClient {
                 gameView.showMessage("Ilość jeńców - Gracz1: " + blackCaptures + " Gracz2: " + whiteCaptures);
                 gameView.showBoard(board);
 
-                gameView.showMessage("Twój ruch. Wpisz współrzędne 'x y' lub 'pass', 'surrender', 'quit':");
+                gameView.showMessage("Twój ruch. Wpisz współrzędne '[Litera][liczba]' (np. D13) lub 'pass', 'surrender', 'quit':");
                 String input = gameView.getInput();
                 
                 if(input.equalsIgnoreCase("pass")){
-                    toServer.writeInt(Protocol.PASS);
-                    toServer.flush();
+                    network.sendPassMessage();
                     gameView.showMessage("Pasujesz turę.");
                     currentTurn = currentTurn.opponent();
                 } 
                 else if(input.equalsIgnoreCase("surrender")){
-                    toServer.writeInt(Protocol.SURRENDER);
-                    toServer.flush();
+                    network.sendSurrenderMessage();
                     gameView.showMessage("Poddajesz się. Koniec gry.");
                     break;
                 }
                 else if(input.equalsIgnoreCase("quit")){
-                    toServer.writeInt(Protocol.QUIT);
-                    toServer.flush();
+                    network.sendQuitMessage();
                     gameView.showMessage("Wychodzisz z gry.");
                     break;
                 }
                 else {
                     try {
-                        String[] parts = input.split("\\s+");
-                        if(parts.length == 2){
-                            int x = Integer.parseInt(parts[0]);
-                            int y = Integer.parseInt(parts[1]);
-                            toServer.writeInt(Protocol.MOVE);
-                            toServer.writeInt(x);
-                            toServer.writeInt(y);
-                            toServer.flush();
-                            gameView.showMessage("Ruch wysłany na pozycję (" + x + "," + y + ")");
+                        int[] coordinates = TranslateCoordinate.translate(input);
+                        if (coordinates != null) {
+                            network.sendSpaceInformation(coordinates);
+                            gameView.showMessage("Ruch wysłany na pozycję (" + input.toUpperCase() + ")");
                             currentTurn = currentTurn.opponent();
                         } else {
-                            gameView.showMessage("Nieprawidłowy format. Wpisz 'x y' lub komendę.");
+                            gameView.showMessage("Nieprawidłowy format. Wpisz '[Litera][Liczba]' (np. D13) lub komendę.");
                         }
                     } catch (NumberFormatException e) {
                         gameView.showMessage("Nieprawidłowe współrzędne. Spróbuj ponownie.");
@@ -97,26 +89,23 @@ public class GoClient {
             } else {
                 gameView.showMessage("Czekanie na ruch przeciwnika");
             
-                int messageType = fromServer.readInt();
+                int messageType = network.readMessage();
 
                 if (messageType == Protocol.MOVE) {
-                    int x = fromServer.readInt();
-                    int y = fromServer.readInt();
-                    gameView.showMessage("Przeciwnik postawił kamień na: " + x + ", " + y);
-                    
+                    int[] coordinates = network.getCoordinates();
+                    gameView.showMessage("Przeciwnik postawił kamień na: " + TranslateCoordinate.invertTranslate(coordinates[0]) + coordinates[1]);
                     currentTurn = currentTurn.opponent();
                 }
                 else if (messageType == Protocol.BOARD_STATE) {
-                    Protocol.receiveBoard(board, fromServer);
+                    network.receiveBoardFromServer(board);
                 }
                 else if (messageType == Protocol.CAPTURES) {
-                    blackCaptures = fromServer.readInt();
-                    whiteCaptures = fromServer.readInt();
+                    network.getCaptures();
                 }
                 else if (messageType == Protocol.INVALID_MOVE) {
-                    int x = fromServer.readInt();
-                    int y = fromServer.readInt();
-                    gameView.showMessage("Ruch ("+x+","+y+") jest nielegalny! Spróbuj ponownie.");
+                    int x = network.readMessage();
+                    int y = network.readMessage();
+                    gameView.showMessage("Ruch ("+TranslateCoordinate.invertTranslate(x)+","+y+") jest nielegalny! Spróbuj ponownie.");
                     currentTurn = currentTurn.opponent();
                 }
                 else if (messageType == Protocol.PASS) {

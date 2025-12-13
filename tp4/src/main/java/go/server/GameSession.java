@@ -37,7 +37,7 @@ public class GameSession implements Runnable{
                     int x=input1.readInt();
                     int y=input1.readInt();
                     
-                    if(mechanics.IsMovePossible(board, (x - 1), (y - 1), Stone.BLACK)){
+                    if(mechanics.IsMovePossible(board, x, y, Stone.BLACK)){
                         System.out.println("Gracz 1 wykonał ruch na pozycję ("+x+","+y+")");
                         output2.writeInt(Protocol.BOARD_STATE);
                         Protocol.sendBoard(board, output2);
@@ -80,7 +80,7 @@ public class GameSession implements Runnable{
                     int x=input2.readInt();
                     int y=input2.readInt();
                     
-                    if(mechanics.IsMovePossible(board, (x - 1), (y - 1), Stone.WHITE)){
+                    if(mechanics.IsMovePossible(board, x, y, Stone.WHITE)){
                         System.out.println("Gracz 2 wykonał ruch na pozycję ("+x+","+y+")");
                         output1.writeInt(Protocol.BOARD_STATE);
                         Protocol.sendBoard(board, output1);

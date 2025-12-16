@@ -4,7 +4,6 @@
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/logic/GameModel.java
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/logic/Stone.java
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/server/GameSession.java
-/home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/client/client.java
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/client/TranslateCoordinate.java
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/logic/Board.java
 /home/qbaret/Pulpit/TP/Lab4/tp4/src/main/java/go/ui/ConsoleView.java

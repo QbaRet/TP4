@@ -25,95 +25,60 @@ public class GameSession implements Runnable{
         try{
             DataInputStream input1 = new DataInputStream(p1Socket.getInputStream());
             DataOutputStream output1 = new DataOutputStream(p1Socket.getOutputStream());
-            
+
             DataInputStream input2 = new DataInputStream(p2Socket.getInputStream());
             DataOutputStream output2 = new DataOutputStream(p2Socket.getOutputStream());
-            output1.writeInt(1); 
+
+            DataInputStream[] inputs = {input1, input2};
+            DataOutputStream[] outputs = {output1, output2};
+            Stone[] colors = {Stone.BLACK, Stone.WHITE};
+
+            output1.writeInt(1);
             output1.flush();
             System.out.println("Gra rozpoczęta.");
-            while(true){
-                int messageType=input1.readInt();
-                if(messageType==Protocol.MOVE){
-                    int x=input1.readInt();
-                    int y=input1.readInt();
-                    
-                    if(mechanics.IsMovePossible(board, x, y, Stone.BLACK)){
-                        System.out.println("Gracz 1 wykonał ruch na pozycję ("+x+","+y+")");
-                        output2.writeInt(Protocol.BOARD_STATE);
-                        Protocol.sendBoard(board, output2);
-                        output2.writeInt(Protocol.CAPTURES);
-                        output2.writeInt(mechanics.blackCaptures);
-                        output2.writeInt(mechanics.whiteCaptures);
-                        output2.writeInt(Protocol.MOVE);
-                        output2.writeInt(x);
-                        output2.writeInt(y);
-                        output2.flush();
+            //gracze wewnatrz programu sa numerowani 0 i 1 ze wzgledu na tablice, mozesz zmienic jak chcesz, ale bedzie ladniej wizualnie za kilka linijek kodu
+            int currentPlayer = 0; 
+            while (true) {
+                int opponent = 1 - currentPlayer;
+                int messageType = inputs[currentPlayer].readInt();
+            
+                if (messageType == Protocol.MOVE) {
+                    int x = inputs[currentPlayer].readInt();
+                    int y = inputs[currentPlayer].readInt();
+
+                    if (mechanics.IsMovePossible(board, x, y, colors[currentPlayer])) {
+                        System.out.println("Gracz " + (currentPlayer + 1) + " wykonał ruch na pozycję (" + x + "," + y + ")");
+                        outputs[opponent].writeInt(Protocol.BOARD_STATE);
+                        Protocol.sendBoard(board, outputs[opponent]);
+                        outputs[opponent].writeInt(Protocol.CAPTURES);
+                        outputs[opponent].writeInt(mechanics.blackCaptures);
+                        outputs[opponent].writeInt(mechanics.whiteCaptures);
+                        outputs[opponent].writeInt(Protocol.MOVE);
+                        outputs[opponent].writeInt(x);
+                        outputs[opponent].writeInt(y);
+                        outputs[opponent].flush();
+                        currentPlayer = opponent;
                     } else {
-                        System.out.println("Gracz 1 wykonał nielegalny ruch na pozycję ("+x+","+y+")");
-                        output1.writeInt(Protocol.INVALID_MOVE);
-                        output1.writeInt(x);
-                        output1.writeInt(y);
-                        output1.flush();
-                        continue; 
+                        System.out.println("Gracz " + (currentPlayer + 1) + " wykonał nielegalny ruch na pozycję (" + x + "," + y + ")");
+                        outputs[currentPlayer].writeInt(Protocol.INVALID_MOVE);
+                        outputs[currentPlayer].writeInt(x);
+                        outputs[currentPlayer].writeInt(y);
+                        outputs[currentPlayer].flush();
                     }
-                }
-                else if(messageType==Protocol.PASS){
-                    System.out.println("Gracz 1 pasuje.");
-                    output2.writeInt(Protocol.PASS);
-                    output2.flush();
-                }
-                else if(messageType==Protocol.SURRENDER){
-                    System.out.println("Gracz 1 się poddał. Gracz 2 wygrywa.");
-                    output2.writeInt(Protocol.SURRENDER);
-                    output2.flush();
+                } else if (messageType == Protocol.PASS) {
+                    System.out.println("Gracz " + (currentPlayer + 1) + " pasuje.");
+                    outputs[opponent].writeInt(Protocol.PASS);
+                    outputs[opponent].flush();
+                    currentPlayer = opponent;
+                } else if (messageType == Protocol.SURRENDER) {
+                    System.out.println("Gracz " + (currentPlayer + 1) + " się poddał. Gracz " + (opponent + 1) + " wygrywa.");
+                    outputs[opponent].writeInt(Protocol.SURRENDER);
+                    outputs[opponent].flush();
                     break;
-                }
-                else if(messageType==Protocol.QUIT){
-                    System.out.println("Gracz 1 wyszedł z gry.");
-                    output2.writeInt(Protocol.QUIT);
-                    output2.flush();
-                    break;
-                }
-                
-                messageType=input2.readInt();
-                if(messageType==Protocol.MOVE){
-                    int x=input2.readInt();
-                    int y=input2.readInt();
-                    
-                    if(mechanics.IsMovePossible(board, x, y, Stone.WHITE)){
-                        System.out.println("Gracz 2 wykonał ruch na pozycję ("+x+","+y+")");
-                        output1.writeInt(Protocol.BOARD_STATE);
-                        Protocol.sendBoard(board, output1);
-                        output1.writeInt(Protocol.CAPTURES);
-                        output1.writeInt(mechanics.blackCaptures);
-                        output1.writeInt(mechanics.whiteCaptures);
-                        output1.writeInt(Protocol.MOVE);
-                        output1.writeInt(x);    
-                        output1.writeInt(y);
-                        output1.flush();
-                    } else {
-                        System.out.println("Gracz 2 wykonał nielegalny ruch na pozycję ("+x+","+y+")");
-                        output2.writeInt(Protocol.INVALID_MOVE);
-                        output2.writeInt(x);
-                        output2.writeInt(y);
-                        output2.flush();
-                    }
-                }
-                else if(messageType==Protocol.PASS){
-                    System.out.println("Gracz 2 pasuje.");
-                    output1.writeInt(Protocol.PASS);
-                    output1.flush();
-                }
-                else if(messageType==Protocol.SURRENDER){
-                    System.out.println("Gracz 2 się poddał. Gracz 1 wygrywa.");
-                    output1.writeInt(Protocol.SURRENDER);
-                    output1.flush();
-                    break;
-                }
-                else if(messageType==Protocol.QUIT){
-                    System.out.println("Gracz 2 wyszedł z gry.");
-                    output1.writeInt(Protocol.QUIT);
-                    output1.flush();
+                } else if (messageType == Protocol.QUIT) {
+                    System.out.println("Gracz " + (currentPlayer + 1) + " wyszedł z gry.");
+                    outputs[opponent].writeInt(Protocol.QUIT);
+                    outputs[opponent].flush();
                     break;
                 }
             }

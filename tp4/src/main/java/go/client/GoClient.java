@@ -103,9 +103,8 @@ public class GoClient {
                     network.getCaptures();
                 }
                 else if (messageType == Protocol.INVALID_MOVE) {
-                    int x = network.readMessage();
-                    int y = network.readMessage();
-                    gameView.showMessage("Ruch ("+TranslateCoordinate.invertTranslate(x)+","+y+") jest nielegalny! Spróbuj ponownie.");
+                    int[] coordinates = network.getCoordinates();
+                    gameView.showMessage("Ruch ("+TranslateCoordinate.invertTranslate(coordinates[0])+","+coordinates[1]+") jest nielegalny! Spróbuj ponownie.");
                     currentTurn = currentTurn.opponent();
                 }
                 else if (messageType == Protocol.PASS) {

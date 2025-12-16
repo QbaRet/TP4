@@ -1,0 +1,158 @@
+@startuml class-diagram
+title Go Game - Class Diagram
+
+' Enums
+enum Stone {
+  BLACK
+  WHITE
+  EMPTY
+  + opponent(): Stone
+}
+
+enum Direction {
+  UP
+  DOWN
+  LEFT
+  RIGHT
+  + getDeltaX(): int
+  + getDeltaY(): int
+}
+
+' Core Logic
+class Board {
+  - int size
+  - Stone[][] fields
+  + Board(int size)
+  + getSize(): int
+  + getField(int x, int y): Stone
+  + setField(int x, int y, Stone color)
+  + isInBounds(int x, int y): boolean
+}
+
+class GameMechanics {
+  + int blackCaptures
+  + int whiteCaptures
+  + IsMovePossible(Board board, int x, int y, Stone color): boolean
+  + AreNeighboursFieldsFree(Board board, int x, int y): boolean
+  - CheckCaptures(Board board, int x, int y, Stone color)
+  - hasLiberties(Board board, int x, int y): boolean
+}
+
+class Protocol {
+  + {static} int Port = 8000
+  + {static} int Player1 = 1
+  + {static} int Player2 = 2
+  + {static} int MOVE = 10
+  + {static} int PASS = 11
+  + {static} int SURRENDER = 12
+  + {static} int QUIT = 13
+  + {static} int GAME_OVER = 14
+  + {static} int INVALID_MOVE = 15
+  + {static} int BOARD_STATE = 16
+  + {static} int CAPTURES = 17
+  + {static} sendBoard(Board, DataOutputStream): void
+  + {static} receiveBoard(Board, DataInputStream): void
+}
+
+' Observer Pattern
+interface GameObserver {
+  + onBoardUpdated(Board board): void
+  + onCapturesUpdated(int blackCaptures, int whiteCaptures): void
+}
+
+class GameModel {
+  - Board board
+  - int blackCaptures
+  - int whiteCaptures
+  - List<GameObserver> observers
+  + GameModel(Board board)
+  + addObserver(GameObserver observer): void
+  + removeObserver(GameObserver observer): void
+  + getBoard(): Board
+  + setCaptures(int black, int white): void
+  + getBlackCaptures(): int
+  + getWhiteCaptures(): int
+  + notifyBoardUpdated(): void
+  + notifyCapturesUpdated(): void
+}
+
+' Server
+class GoServer {
+  + {static} main(String[] args): void
+  + GoServer()
+}
+
+class GameSession implements Runnable {
+  - Socket p1Socket
+  - Socket p2Socket
+  - Board board
+  - GameMechanics mechanics
+  + GameSession(Socket p1, Socket p2)
+  + run(): void
+}
+
+' Client
+class GoClient implements GameObserver {
+  - Socket socket
+  - DataInputStream fromServer
+  - DataOutputStream toServer
+  - Board board
+  - GameModel model
+  - GameView gameView
+  - int blackCaptures
+  - int whiteCaptures
+  - Stone myColor
+  + {static} main(String[] args): void
+  - connect(): void
+  - playGame(int playerId): void
+  + onBoardUpdated(Board board): void
+  + onCapturesUpdated(int blackCaptures, int whiteCaptures): void
+}
+
+' UI
+interface GameView {
+  + showBoard(Board board): void
+  + showMessage(String message): void
+  + getInput(): String
+}
+
+class ConsoleView implements GameView {
+  - Scanner scanner
+  + showBoard(Board board): void
+  + showMessage(String message): void
+  + getInput(): String
+}
+
+' Relationships
+Board *-- Stone : contains
+GameMechanics ..> Board : uses
+GameMechanics ..> Stone : uses
+GameMechanics ..> Direction : uses
+
+GameSession *-- Board : owns
+GameSession *-- GameMechanics : owns
+GameSession ..> Protocol : uses
+GameSession ..> Stone : uses
+
+GoServer ..> GameSession : creates
+GoServer ..> Protocol : uses
+
+GoClient *-- Board : owns
+GoClient *-- GameModel : owns
+GoClient o-- GameView : uses
+GoClient ..> Protocol : uses
+GoClient ..> Stone : uses
+GoClient ..|> GameObserver : implements
+
+GameModel *-- Board : owns
+GameModel o-- GameObserver : notifies
+GameModel ..> Stone : uses
+
+ConsoleView ..|> GameView : implements
+ConsoleView ..> Board : displays
+ConsoleView ..> Stone : displays
+
+Protocol ..> Board : serializes
+Protocol ..> Stone : serializes
+
+@enduml

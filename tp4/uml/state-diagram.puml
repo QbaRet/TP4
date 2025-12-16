@@ -1,0 +1,102 @@
+@startuml state-diagram
+title Go Game - State Diagram
+
+[*] --> ServerWaiting : Server starts
+
+state "Server States" as ServerStates {
+  ServerWaiting --> PlayerOneConnected : Player 1 connects
+  PlayerOneConnected --> GameRunning : Player 2 connects
+  GameRunning --> GameEnded : Game over
+  GameEnded --> ServerWaiting : New game session
+}
+
+state "Client States" as ClientStates {
+  [*] --> Connecting : Client starts
+  Connecting --> WaitingForOpponent : Connected as Player 1
+  Connecting --> ReadyToPlay : Connected as Player 2
+  WaitingForOpponent --> ReadyToPlay : Opponent joined
+  
+  ReadyToPlay --> MyTurn : My color turn
+  ReadyToPlay --> OpponentTurn : Opponent's color turn
+  
+  state "MyTurn" as MyTurn {
+    [*] --> AwaitingInput
+    AwaitingInput --> SendingMove : Input received
+    SendingMove --> [*]
+  }
+  
+  state "OpponentTurn" as OpponentTurn {
+    [*] --> WaitingForMove
+    WaitingForMove --> ProcessingMove : Move received
+    WaitingForMove --> ProcessingPass : Pass received
+    WaitingForMove --> GameOver : Surrender/Quit received
+    ProcessingMove --> [*]
+    ProcessingPass --> [*]
+  }
+  
+  MyTurn --> OpponentTurn : Valid move sent
+  MyTurn --> MyTurn : Invalid move
+  OpponentTurn --> MyTurn : Opponent's turn completed
+  
+  MyTurn --> GameOver : Surrender/Quit
+  OpponentTurn --> GameOver : Opponent surrenders/quits
+  
+  GameOver --> [*]
+}
+
+state "Game Session States" as SessionStates {
+  [*] --> Initializing : Session created
+  Initializing --> Player1Turn : Game starts
+  
+  state "Player1Turn" as P1Turn {
+    [*] --> AwaitingP1Message
+    AwaitingP1Message --> ValidatingP1Move : MOVE received
+    AwaitingP1Message --> ProcessingP1Pass : PASS received
+    AwaitingP1Message --> EndingGame : SURRENDER/QUIT received
+    ValidatingP1Move --> SendingToP2 : Valid
+    ValidatingP1Move --> SendingInvalid : Invalid
+    SendingToP2 --> [*]
+    SendingInvalid --> AwaitingP1Message
+    ProcessingP1Pass --> [*]
+  }
+  
+  state "Player2Turn" as P2Turn {
+    [*] --> AwaitingP2Message
+    AwaitingP2Message --> ValidatingP2Move : MOVE received
+    AwaitingP2Message --> ProcessingP2Pass : PASS received
+    AwaitingP2Message --> EndingGame : SURRENDER/QUIT received
+    ValidatingP2Move --> SendingToP1 : Valid
+    ValidatingP2Move --> SendingInvalid : Invalid
+    SendingToP1 --> [*]
+    SendingInvalid --> AwaitingP2Message
+    ProcessingP2Pass --> [*]
+  }
+  
+  Player1Turn --> Player2Turn : Turn completed
+  Player2Turn --> Player1Turn : Turn completed
+  
+  Player1Turn --> EndingGame : Player 1 surrenders/quits
+  Player2Turn --> EndingGame : Player 2 surrenders/quits
+  
+  EndingGame --> [*]
+}
+
+note right of ServerStates
+  Server continuously accepts
+  new player pairs and creates
+  separate GameSession threads
+end note
+
+note right of ClientStates
+  Client alternates between
+  sending moves and waiting
+  for opponent's response
+end note
+
+note right of SessionStates
+  GameSession validates moves
+  using GameMechanics and
+  relays updates to opponent
+end note
+
+@enduml

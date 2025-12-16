@@ -1,0 +1,169 @@
+@startuml sequence-diagram
+title Go Game - Sequence Diagram (Complete Game Flow)
+
+actor "Player 1" as P1
+participant "GoClient1" as C1
+participant "GoServer" as Server
+participant "GameSession" as Session
+participant "GameMechanics" as Mech
+participant "Board" as Board
+participant "GameModel" as Model1
+participant "GoClient2" as C2
+actor "Player 2" as P2
+
+== Connection Phase ==
+
+Server -> Server: Listen on port 8000
+activate Server
+
+P1 -> C1: Start client
+activate C1
+C1 -> Server: Connect
+Server -> C1: Player ID = 1
+Server -> C1: Wait for Player 2
+C1 -> Model1: addObserver(this)
+C1 -> P1: "Połączono jako gracz 1\nCzekanie na drugiego gracza"
+
+P2 -> C2: Start client
+activate C2
+C2 -> Server: Connect
+Server -> C2: Player ID = 2
+Server -> C1: Player 2 joined
+Server -> Session: new GameSession(p1Socket, p2Socket)
+activate Session
+Server -> Session: start thread
+
+C1 -> P1: "Drugi gracz dołączył"
+C2 -> P2: "Połączono jako gracz 2"
+
+== Game Play - Valid Move ==
+
+Session -> Session: currentPlayer = 0 (BLACK)
+C1 -> P1: "Twój ruch. Wpisz 'x y'"
+P1 -> C1: "5 5"
+C1 -> Session: MOVE, x=5, y=5
+
+Session -> Mech: IsMovePossible(board, 5, 5, BLACK)
+activate Mech
+Mech -> Board: getField(5, 5)
+Board --> Mech: EMPTY
+Mech -> Board: setField(5, 5, BLACK)
+Mech -> Mech: CheckCaptures(board, 5, 5, BLACK)
+Mech -> Mech: hasLiberties(board, 5, 5)
+Mech --> Session: true
+deactivate Mech
+
+Session -> C2: BOARD_STATE
+Session -> C2: sendBoard(board)
+Session -> C2: CAPTURES (black=0, white=0)
+Session -> C2: MOVE (x=5, y=5)
+
+C2 -> Model1: receiveBoard(board)
+C2 -> Model1: notifyBoardUpdated()
+Model1 -> C2: onBoardUpdated(board)
+C2 -> P2: Display updated board
+C2 -> Model1: setCaptures(0, 0)
+Model1 -> C2: onCapturesUpdated(0, 0)
+C2 -> P2: "Ilość jeńców - Gracz1: 0 Gracz2: 0"
+C2 -> P2: "Przeciwnik postawił kamień na: 5, 5"
+
+Session -> Session: currentPlayer = 1 (WHITE)
+
+== Game Play - Invalid Move ==
+
+C2 -> P2: "Twój ruch"
+P2 -> C2: "5 5"
+C2 -> Session: MOVE, x=5, y=5
+
+Session -> Mech: IsMovePossible(board, 5, 5, WHITE)
+activate Mech
+Mech -> Board: getField(5, 5)
+Board --> Mech: BLACK (occupied)
+Mech --> Session: false
+deactivate Mech
+
+Session -> C2: INVALID_MOVE, x=5, y=5
+C2 -> P2: "Ruch (5,5) jest nielegalny! Spróbuj ponownie."
+
+C2 -> P2: "Twój ruch"
+P2 -> C2: "6 5"
+C2 -> Session: MOVE, x=6, y=5
+
+Session -> Mech: IsMovePossible(board, 6, 5, WHITE)
+activate Mech
+Mech -> Board: setField(6, 5, WHITE)
+Mech --> Session: true
+deactivate Mech
+
+Session -> C1: BOARD_STATE
+Session -> C1: sendBoard(board)
+Session -> C1: CAPTURES (black=0, white=0)
+Session -> C1: MOVE (x=6, y=5)
+
+C1 -> P1: Display updated board
+C1 -> P1: "Przeciwnik postawił kamień na: 6, 5"
+
+Session -> Session: currentPlayer = 0 (BLACK)
+
+== Game Play - Pass ==
+
+C1 -> P1: "Twój ruch"
+P1 -> C1: "pass"
+C1 -> Session: PASS
+
+Session -> C2: PASS
+C2 -> P2: "Przeciwnik spasował."
+
+Session -> Session: currentPlayer = 1 (WHITE)
+
+== Game Play - Capture Scenario ==
+
+C2 -> P2: "Twój ruch"
+P2 -> C2: "10 10"
+C2 -> Session: MOVE, x=10, y=10
+
+Session -> Mech: IsMovePossible(board, 10, 10, WHITE)
+activate Mech
+Mech -> Board: setField(10, 10, WHITE)
+Mech -> Mech: CheckCaptures(board, 10, 10, WHITE)
+note right
+  Assuming this move captures
+  a black stone group
+end note
+Mech -> Board: setField(neighbor_x, neighbor_y, EMPTY)
+Mech -> Mech: blackCaptures++
+Mech --> Session: true
+deactivate Mech
+
+Session -> C1: BOARD_STATE
+Session -> C1: sendBoard(board)
+Session -> C1: CAPTURES (black=1, white=0)
+Session -> C1: MOVE (x=10, y=10)
+
+C1 -> Model1: receiveBoard(board)
+C1 -> Model1: setCaptures(1, 0)
+Model1 -> C1: onCapturesUpdated(1, 0)
+C1 -> P1: "Ilość jeńców - Gracz1: 1 Gracz2: 0"
+
+== Game End - Surrender ==
+
+C1 -> P1: "Twój ruch"
+P1 -> C1: "surrender"
+C1 -> Session: SURRENDER
+
+Session -> C2: SURRENDER
+C2 -> P2: "Przeciwnik się poddał! Wygrałeś."
+
+Session -> Session: break game loop
+deactivate Session
+
+C1 -> P1: "Poddajesz się. Koniec gry."
+deactivate C1
+deactivate C2
+
+note over Server
+  Server continues listening
+  for new player pairs
+end note
+
+@enduml

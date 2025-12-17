@@ -18,7 +18,6 @@ public class Main {
         }
     }
 
-    // Metoda sprawdzająca, czy port jest wolny
     private static boolean isPortAvailable() {
         try (ServerSocket serverSocket = new ServerSocket(Protocol.Port)) {
             return true;

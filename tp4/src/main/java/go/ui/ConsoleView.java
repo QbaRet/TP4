@@ -19,7 +19,7 @@ public class ConsoleView implements GameView {
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                if (board.getField(x, y) == Stone.EMPTY) System.out.print("+ ");
+                if (board.getField(x, y) == Stone.EMPTY) System.out.print(". ");
                 else if (board.getField(x, y) == Stone.WHITE) System.out.print("O ");
                 else if (board.getField(x, y) == Stone.BLACK) System.out.print("X ");
             }

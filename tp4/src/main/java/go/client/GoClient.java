@@ -1,21 +1,13 @@
 package go.client;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 import go.logic.Board;
 import go.logic.Protocol;
 import go.logic.Stone;
 import go.ui.ConsoleView;
 import go.ui.GameView;
-import go.client.TranslateCoordinate;
 
 public class GoClient {
-//    private Socket socket;
-//    private DataInputStream fromServer;
-//    private DataOutputStream toServer;
     private Board board = new Board(19);
     private final GameView gameView = new ConsoleView();
     private int blackCaptures = 0;
@@ -46,7 +38,7 @@ public class GoClient {
             gameView.showMessage("Błąd połączenia z serwerem");
         }
     } 
-    private void playGame(int playerId) throws IOException{
+    private void playGame(int playerId) throws IOException {
         Stone currentTurn = Stone.BLACK;
         while(true){
             if(currentTurn == myColor){
@@ -122,4 +114,4 @@ public class GoClient {
             }
         }
     }
-}   
+}

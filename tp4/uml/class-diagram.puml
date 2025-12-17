@@ -1,158 +1,168 @@
-@startuml class-diagram
-title Go Game - Class Diagram
+@startuml
 
-' Enums
-enum Stone {
-  BLACK
-  WHITE
-  EMPTY
-  + opponent(): Stone
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+
+package "go" {
+    class Main {
+        + {static} main(args: String[]): void
+        - {static} isPortAvailable(): boolean
+    }
 }
 
-enum Direction {
-  UP
-  DOWN
-  LEFT
-  RIGHT
-  + getDeltaX(): int
-  + getDeltaY(): int
+package "go.client" {
+    class GoClient {
+        - board: Board
+        - gameView: GameView
+        - blackCaptures: int
+        - whiteCaptures: int
+        - network: NetworkConnection
+        - myColor: Stone
+        + {static} main(args: String[]): void
+        - connect(): void
+        - playGame(playerId: int): void
+    }
+
+    class NetworkConnection {
+        - socket: Socket
+        - fromServer: DataInputStream
+        - toServer: DataOutputStream
+        + connect(): void
+        + getPlayerId(): int
+        + waitForSecondPlayer(): void
+        + sendPassMessage(): void
+        + sendSurrenderMessage(): void
+        + sendQuitMessage(): void
+        + sendSpaceInformation(coordinates: int[]): void
+        + readMessage(): int
+        + receiveBoardFromServer(board: Board): void
+        + getCaptures(): int[]
+        + getCoordinates(): int[]
+    }
+
+    class TranslateCoordinate {
+        + {static} translate(input: String): int[]
+        + {static} invertTranslate(number: int): char
+    }
 }
 
-' Core Logic
-class Board {
-  - int size
-  - Stone[][] fields
-  + Board(int size)
-  + getSize(): int
-  + getField(int x, int y): Stone
-  + setField(int x, int y, Stone color)
-  + isInBounds(int x, int y): boolean
+package "go.server" {
+    class GoServer {
+        + {static} main(args: String[]): void
+        + GoServer()
+    }
+
+    class GameSession implements Runnable {
+        - p1Socket: Socket
+        - p2Socket: Socket
+        - board: Board
+        - mechanics: GameMechanics
+        + GameSession(p1: Socket, p2: Socket)
+        + run(): void
+    }
 }
 
-class GameMechanics {
-  + int blackCaptures
-  + int whiteCaptures
-  + IsMovePossible(Board board, int x, int y, Stone color): boolean
-  + AreNeighboursFieldsFree(Board board, int x, int y): boolean
-  - CheckCaptures(Board board, int x, int y, Stone color)
-  - hasLiberties(Board board, int x, int y): boolean
+package "go.logic" {
+    class Board {
+        - size: int
+        + fields: Stone[][]
+        + Board(size: int)
+        + getSize(): int
+        + setField(wspX: int, wspY: int, stone: Stone): void
+        + getField(wspX: int, wspY: int): Stone
+        + isFieldOnBoard(x: int, y: int): boolean
+    }
+
+    class GameMechanics {
+        + blackCaptures: int
+        + whiteCaptures: int
+        + IsMovePossible(board: Board, x: int, y: int, color: Stone): boolean
+        - AreNeighboursFieldsFree(board: Board, x: int, y: int): boolean
+        - CheckCaptures(board: Board, x: int, y: int, color: Stone): void
+    }
+
+    class Protocol {
+        + {static} Port: int = 8000
+        + {static} Player1: int = 1
+        + {static} Player2: int = 2
+        + {static} MOVE: int = 10
+        + {static} PASS: int = 11
+        + {static} SURRENDER: int = 12
+        + {static} QUIT: int = 13
+        + {static} GAME_OVER: int = 14
+        + {static} INVALID_MOVE: int = 15
+        + {static} BOARD_STATE: int = 16
+        + {static} CAPTURES: int = 17
+        + {static} sendBoard(board: Board, out: DataOutputStream): void
+        + {static} receiveBoard(board: Board, in: DataInputStream): void
+    }
+
+    enum Stone {
+        BLACK
+        WHITE
+        EMPTY
+        + opponent(): Stone
+    }
+
+    enum Direction {
+        UP(0, -1)
+        LEFT(-1, 0)
+        RIGHT(1, 0)
+        DOWN(0, 1)
+        - dx: int
+        - dy: int
+        + getDx(): int
+        + getDy(): int
+    }
 }
 
-class Protocol {
-  + {static} int Port = 8000
-  + {static} int Player1 = 1
-  + {static} int Player2 = 2
-  + {static} int MOVE = 10
-  + {static} int PASS = 11
-  + {static} int SURRENDER = 12
-  + {static} int QUIT = 13
-  + {static} int GAME_OVER = 14
-  + {static} int INVALID_MOVE = 15
-  + {static} int BOARD_STATE = 16
-  + {static} int CAPTURES = 17
-  + {static} sendBoard(Board, DataOutputStream): void
-  + {static} receiveBoard(Board, DataInputStream): void
+package "go.ui" {
+    interface GameView {
+        + showBoard(board: Board): void
+        + showMessage(message: String): void
+        + getInput(): String
+    }
+
+    class ConsoleView implements GameView {
+        - scanner: Scanner
+        + ConsoleView()
+        + showBoard(board: Board): void
+        + showMessage(message: String): void
+        + getInput(): String
+    }
 }
 
-' Observer Pattern
-interface GameObserver {
-  + onBoardUpdated(Board board): void
-  + onCapturesUpdated(int blackCaptures, int whiteCaptures): void
-}
+' Relacje
+Main ..> GoServer : uruchamia
+Main ..> GoClient : uruchamia
+Main ..> Protocol : używa
 
-class GameModel {
-  - Board board
-  - int blackCaptures
-  - int whiteCaptures
-  - List<GameObserver> observers
-  + GameModel(Board board)
-  + addObserver(GameObserver observer): void
-  + removeObserver(GameObserver observer): void
-  + getBoard(): Board
-  + setCaptures(int black, int white): void
-  + getBlackCaptures(): int
-  + getWhiteCaptures(): int
-  + notifyBoardUpdated(): void
-  + notifyCapturesUpdated(): void
-}
+GoClient --> Board : ma
+GoClient --> GameView : używa
+GoClient --> NetworkConnection : ma
+GoClient --> Stone : używa
+GoClient ..> TranslateCoordinate : używa
+GoClient ..> Protocol : używa
 
-' Server
-class GoServer {
-  + {static} main(String[] args): void
-  + GoServer()
-}
+NetworkConnection ..> Protocol : używa
+NetworkConnection ..> Board : wysyła/odbiera
 
-class GameSession implements Runnable {
-  - Socket p1Socket
-  - Socket p2Socket
-  - Board board
-  - GameMechanics mechanics
-  + GameSession(Socket p1, Socket p2)
-  + run(): void
-}
+GoServer ..> GameSession : tworzy
+GoServer ..> Protocol : używa
 
-' Client
-class GoClient implements GameObserver {
-  - Socket socket
-  - DataInputStream fromServer
-  - DataOutputStream toServer
-  - Board board
-  - GameModel model
-  - GameView gameView
-  - int blackCaptures
-  - int whiteCaptures
-  - Stone myColor
-  + {static} main(String[] args): void
-  - connect(): void
-  - playGame(int playerId): void
-  + onBoardUpdated(Board board): void
-  + onCapturesUpdated(int blackCaptures, int whiteCaptures): void
-}
+GameSession --> Board : ma
+GameSession --> GameMechanics : ma
+GameSession ..> Protocol : używa
+GameSession ..> Stone : używa
 
-' UI
-interface GameView {
-  + showBoard(Board board): void
-  + showMessage(String message): void
-  + getInput(): String
-}
+GameMechanics ..> Board : modyfikuje
+GameMechanics ..> Stone : używa
+GameMechanics ..> Direction : używa
 
-class ConsoleView implements GameView {
-  - Scanner scanner
-  + showBoard(Board board): void
-  + showMessage(String message): void
-  + getInput(): String
-}
+Board --> Stone : zawiera
 
-' Relationships
-Board *-- Stone : contains
-GameMechanics ..> Board : uses
-GameMechanics ..> Stone : uses
-GameMechanics ..> Direction : uses
-
-GameSession *-- Board : owns
-GameSession *-- GameMechanics : owns
-GameSession ..> Protocol : uses
-GameSession ..> Stone : uses
-
-GoServer ..> GameSession : creates
-GoServer ..> Protocol : uses
-
-GoClient *-- Board : owns
-GoClient *-- GameModel : owns
-GoClient o-- GameView : uses
-GoClient ..> Protocol : uses
-GoClient ..> Stone : uses
-GoClient ..|> GameObserver : implements
-
-GameModel *-- Board : owns
-GameModel o-- GameObserver : notifies
-GameModel ..> Stone : uses
-
-ConsoleView ..|> GameView : implements
-ConsoleView ..> Board : displays
-ConsoleView ..> Stone : displays
-
-Protocol ..> Board : serializes
-Protocol ..> Stone : serializes
+ConsoleView ..|> GameView : implementuje
+ConsoleView ..> Board : wyświetla
+ConsoleView ..> Stone : używa
 
 @enduml

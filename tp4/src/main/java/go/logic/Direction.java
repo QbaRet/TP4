@@ -1,5 +1,7 @@
 package go.logic;
 
+// klasa typu enum przechowuje wszystkie mozliwe ruchy o jeden w pionie lub poziomie
+
 public enum Direction {
     UP(0, -1),
     LEFT(-1, 0),

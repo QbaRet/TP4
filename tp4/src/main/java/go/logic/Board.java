@@ -1,5 +1,7 @@
 package go.logic;
 
+// klasa Board tworzy początkowy stan planszy oraz wykonuje zmiany podczas rozgrywki, przechowując jednocześnie obecny stan planszy
+
 public class Board {
     private final int size;
     public final Stone[][] fields;
@@ -19,6 +21,8 @@ public class Board {
         return size;
     }
 
+
+    // metoda zmieniająca wskazane pole na planszy na wartość przekazaną jako argument
     public void setField(int wspX, int wspY, Stone stone) {
         if (!isFieldOnBoard(wspX, wspY)) {
             throw new IllegalArgumentException("Podane pole nie nalezy do planszy!");
@@ -26,6 +30,8 @@ public class Board {
         fields[wspX][wspY] = stone;
     }
 
+
+    //funkcja zwracająca wartość pola wskazanego w argumencie metody
     public Stone getField(int wspX, int wspY) {
         if (!isFieldOnBoard(wspX, wspY)) {
             throw new IllegalArgumentException("Podane pole nie nalezy do planszy!");
@@ -33,6 +39,8 @@ public class Board {
         return fields[wspX][wspY];
     }
 
+
+    //funkcja pomocnicza określająca, czy wskazane pole nalezy do planszy
     public boolean isFieldOnBoard(int x, int y) {
         return x >= 0 && x < size && y >= 0 && y < size;
     }

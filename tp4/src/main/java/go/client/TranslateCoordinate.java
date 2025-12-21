@@ -1,5 +1,8 @@
 package go.client;
 
+
+//klasa umozliwiajaca klientowi uzywanie koordynatow stosujac zapis [litera][liczba] i tlumaczy
+// ten zapis na [liczba][liczba] - wzorzec ADAPTER
 public class TranslateCoordinate {
     public static int[] translate(String input) {
         if (input.length() < 2 || input.length() > 3) return null;

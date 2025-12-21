@@ -10,6 +10,8 @@ import java.net.Socket;
 
 import static javax.management.remote.JMXConnectorFactory.connect;
 
+//klasa powstala w celu odsuniecia logiki sieciowej od klasy klienta - stosujac wzorzec FACADE
+
 public class NetworkConnection {
     private Socket socket;
     private DataInputStream fromServer;

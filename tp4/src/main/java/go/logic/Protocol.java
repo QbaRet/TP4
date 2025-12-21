@@ -3,7 +3,8 @@ package go.logic;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
+// klasa Protocol zawiera stałe, które ułatwiają komunikację między klientem a serwerem
+// zawiera także metody do wysyłania i odbierania stanu planszy gry
 public class Protocol {
     public static final int Port=8000;
     public static final int Player1=1;
@@ -16,7 +17,7 @@ public class Protocol {
     public static final int INVALID_MOVE=15;
     public static final int BOARD_STATE=16;
     public static final int CAPTURES=17;
-
+    //metoda do wysyłania stanu planszy przez strumień
     public static void sendBoard(Board board, DataOutputStream out) throws IOException {
         out.writeInt(board.getSize());
 
@@ -28,7 +29,7 @@ public class Protocol {
         }
     }
 
-
+    //metoda do odbierania stanu planszy przez strumień
     public static void receiveBoard(Board board, DataInputStream in) throws IOException {
         int size = in.readInt();
 
